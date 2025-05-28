@@ -11,6 +11,7 @@ using ColorSchemes
 using FileIO
 using ColorTypes
 using ImageCore
+using Extents
 
 include("plot.jl")
 include("webserver.jl")

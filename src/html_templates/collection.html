@@ -21,7 +21,7 @@
 {% for layer in layers %}
 <h3>{{ layer }}</h3>
 <code
-  >http://127.0.0.1:8080/collections/{{collectionId}}/coverage/tiles/WebMercatorQuad/{z}/{y}/{x}?subset=Layer({{layer}})</code
+  >http://127.0.0.1:8080/collections/{{collectionId}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code
 >
 
 {% end %} {% endblock %} Example OGC API - Tiles server

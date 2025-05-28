@@ -70,34 +70,75 @@ function request_collection_json(collectionId, collection::DGGSDataset)
     )
 end
 
-function request_collection_map(req, collectionId, collections; scale_factor=1, offset=0)
-    dggs_ds = collections[collectionId]
-    layer = dggs_ds |> keys |> first
-    dggs_array = getproperty(dggs_ds, layer)
+function get_geo_bbox(z, x, y)
+    #@see https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
 
-    lon_dim = X(-180:180)
-    lat_dim = Y(-90:90)
+    n = 2^z
+    lon_min = x / n * 360.0 - 180.0
+    lat_max = atan(sinh(π * (1 - 2 * y / n))) |> rad2deg
+
+    lon_max = (x + 1) / n * 360.0 - 180.0
+    lat_min = atan(sinh(π * (1 - 2 * (y + 1) / n))) |> rad2deg
+
+    return Extent(X=(lon_min, lon_max), Y=(lat_min, lat_max))
+end
+
+function get_map(dggs_array::DGGSArray, lon_dim, lat_dim)
     matrix = to_geo_array(dggs_array, lon_dim, lat_dim) |> collect .|> x -> isnan(x) ? 1 : x
 
     # Normalize matrix to [0, 1]
-    minval = minimum(matrix)
-    maxval = maximum(matrix)
+    minval = 0#minimum(matrix)
+    maxval = 255# maximum(matrix)
     norm_matrix = (matrix .- minval) ./ (maxval - minval + eps())
     norm_matrix = norm_matrix[1:length(lon_dim), length(lat_dim):-1:1]'
 
     img = colorview(RGB, reinterpret(RGB{Float32}, [get(ColorSchemes.viridis, v) for v in norm_matrix]))
+    return img
+end
+
+function request_tile(req, collectionId, collections, z, x, y)
+    dggs_ds = collections[collectionId]
+    layer = dggs_ds |> keys |> first
+    dggs_array = getproperty(dggs_ds, layer)
+
+    z = parse(Int, z)
+    y = parse(Int, y)
+    x = parse(Int, x)
+    bbox = get_geo_bbox(z, x, y)
+    lon_dim = range(bbox.X..., length=256)
+    lat_dim = range(bbox.Y..., length=256)
+
+    img = get_map(dggs_array, lon_dim, lat_dim)
 
     io = IOBuffer()
     save(FileIO.Stream(format"PNG", io), img)
 
     response_headers = [
         "Content-Type" => "image/png",
-        # "cache-control" => "max-age=23117, stale-while-revalidate=604800, stale-if-error=604800"
     ]
     response = HTTP.Response(200, response_headers, io.data)
     return response
-
 end
+
+function request_collection_map(req, collectionId, collections)
+    dggs_ds = collections[collectionId]
+    layer = dggs_ds |> keys |> first
+    dggs_array = getproperty(dggs_ds, layer)
+
+    lon_dim = X(-180:180)
+    lat_dim = Y(-90:90)
+    img = get_map(dggs_array, lon_dim, lat_dim)
+
+    io = IOBuffer()
+    save(FileIO.Stream(format"PNG", io), img)
+
+    response_headers = [
+        "Content-Type" => "image/png",
+    ]
+    response = HTTP.Response(200, response_headers, io.data)
+    return response
+end
+
 
 function serve(
     collections::Dict{String,DS};
@@ -107,11 +148,7 @@ function serve(
     @get "/collections" req -> request_collections(req, collections)
     @get "/collections/{collectionId}" (req, collectionId) -> request_collection(req, collectionId, collections)
     @get "/collections/{collectionId}/map" (req, collectionId) -> request_collection_map(req, collectionId, collections)
-
-    @get "/hello" function ()
-        fig = heatmap(rand(50, 50))
-        html(fig)
-    end
+    @get "/collections/{collectionId}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}" (req, collectionId, z, x, y) -> request_tile(req, collectionId, collections, z, x, y)
 
     Makie.inline!(false)
     Oxygen.serve(; kwargs...)
