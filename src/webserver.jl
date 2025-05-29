@@ -60,6 +60,7 @@ function request_collection_html(collectionId, collection::DGGSDataset)
         :collectionId => collectionId,
         :layers => keys(layers(collection)),
         :collection => collection,
+        :geo_bbox => DGGS.get_geo_bbox(collection),
     ))
 end
 

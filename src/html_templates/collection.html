@@ -1,4 +1,17 @@
-{% extends "page.html" %} {% block body %}
+{% extends "page.html" %} {% block head %}
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<!-- Make sure you put this AFTER Leaflet's CSS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+{% endblock %} {% block body %}
 <h1>
   Collection {{ collectionId }}
   <a href="?f=json">
@@ -15,7 +28,46 @@
 
 <p>{{collection.dggsrs}} at resolution {{collection.resolution}}</p>
 
-<img src="{{collectionId}}/map" />
+<div
+  style="
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 40em;
+  "
+>
+  <img
+    src="{{collectionId}}/map"
+    style="width: 100%; height: 20em; object-fit: contain"
+  />
+  <div id="map" style="width: 100%; height: 40em; margin-top: 1em"></div>
+  <p>{{geo_bbox}}</p>
+</div>
+
+<script>
+  var map = L.map("map").setView([0, 0], 0.5);
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  }).addTo(map);
+
+  var bounds = [
+    {{geo_bbox.X[1]}}, {{geo_bbox.Y[1]}},
+    {{geo_bbox.X[2]}}, {{geo_bbox.Y[2]}},
+  ];
+
+  var rect = L.rectangle(bounds, { color: "blue", weight: 1 })
+    .on("click", function (e) {
+      // There event is event object
+      // there e.type === 'click'
+      // there e.lanlng === L.LatLng on map
+      // there e.target.getLatLngs() - your rectangle coordinates
+      // but e.target !== rect
+      console.info(e);
+    })
+    .addTo(map);
+</script>
 
 <h2>Layers</h2>
 {% for layer in layers %}
