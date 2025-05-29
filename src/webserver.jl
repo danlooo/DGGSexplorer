@@ -1,6 +1,6 @@
 
 function request_root(collections)
-    tmpl = Template("/home/dloos/.julia/dev/DGGSexplorer/src/html_templates/root.html")
+    tmpl = joinpath(pkgdir(DGGSexplorer), "src", "html_templates", "root.html") |> Template
     tmpl(init=Dict(:title => "DGGSExplorer", :collectionIds => keys(collections)))
 end
 
@@ -24,7 +24,7 @@ function request_collections_json(collections)
 end
 
 function request_collections_html(collections)
-    tmpl = Template("/home/dloos/.julia/dev/DGGSexplorer/src/html_templates/collections.html")
+    tmpl = joinpath(pkgdir(DGGSexplorer), "src", "html_templates", "collections.html") |> Template
     tmpl(init=Dict(:title => "collections", :collectionIds => keys(collections)))
 end
 
@@ -54,7 +54,7 @@ end
 
 
 function request_collection_html(collectionId, collection::DGGSDataset)
-    tmpl = Template("/home/dloos/.julia/dev/DGGSexplorer/src/html_templates/collection.html")
+    tmpl = joinpath(pkgdir(DGGSexplorer), "src", "html_templates", "collection.html") |> Template
     tmpl(init=Dict(
         :title => "DGGSExplorer",
         :collectionId => collectionId,
