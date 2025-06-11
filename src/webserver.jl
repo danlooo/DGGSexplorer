@@ -94,11 +94,11 @@ function get_geo_bbox(z, x, y)
 end
 
 function get_map(dggs_array::DGGSArray, lon_dim, lat_dim)
-    matrix = to_geo_array(dggs_array, lon_dim, lat_dim) |> collect .|> x -> isnan(x) ? 1 : x
+    matrix = to_geo_array(dggs_array, lon_dim, lat_dim) |> collect |> x -> replace!(x, missing => 1, NaN => 1)
 
     # Normalize matrix to [0, 1]
-    minval = 82#minimum(matrix)
-    maxval = 244# maximum(matrix)
+    minval = minimum(matrix)
+    maxval = maximum(matrix)
     norm_matrix = (matrix .- minval) ./ (maxval - minval + eps())
     norm_matrix = norm_matrix[1:length(lon_dim), length(lat_dim):-1:1]'
 
@@ -135,8 +135,11 @@ function request_collection_map(req, collectionId, collections)
     layer = dggs_ds |> keys |> first
     dggs_array = getproperty(dggs_ds, layer)
 
-    lon_dim = X(-180:180)
-    lat_dim = Y(-90:90)
+    geo_bbox = DGGS.get_geo_bbox(dggs_array)
+    aspect_ratio = (geo_bbox.X[2] - geo_bbox.X[1]) / (geo_bbox.Y[2] - geo_bbox.Y[1])
+    height = 400
+    lon_dim = X(range(geo_bbox.X..., length=aspect_ratio * height |> round |> Int))
+    lat_dim = Y(range(geo_bbox.Y..., length=height))
     img = get_map(dggs_array, lon_dim, lat_dim)
 
     io = IOBuffer()
