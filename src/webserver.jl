@@ -108,7 +108,8 @@ end
 
 function request_tile(req, collectionId, collections, z, x, y)
     dggs_ds = collections[collectionId]
-    layer = dggs_ds |> keys |> first
+    layer = queryparams(req)["subset"] |> x -> match(r"Layer[(][^)]+[)]"ism, x).match[7:end-1] |> Symbol
+    @info layer
     dggs_array = getproperty(dggs_ds, layer)
 
     z = parse(Int, z)
