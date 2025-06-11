@@ -60,14 +60,23 @@ function request_collection_html(collectionId, collection::DGGSDataset)
         :collectionId => collectionId,
         :layers => keys(layers(collection)),
         :collection => collection,
-        :geo_bbox => DGGS.get_geo_bbox(collection),
+        :collectionURL => try
+            collection.data |> first |> a -> a.data.a.storage.parent.url
+        catch
+            ""
+        end
     ))
 end
 
 
 function request_collection_json(collectionId, collection::DGGSDataset)
     return Dict(
-        :id => collectionId
+        :id => collectionId,
+        :url => try
+            collection.data |> first |> a -> a.data.a.storage.parent.url
+        catch
+            ""
+        end
     )
 end
 
@@ -88,8 +97,8 @@ function get_map(dggs_array::DGGSArray, lon_dim, lat_dim)
     matrix = to_geo_array(dggs_array, lon_dim, lat_dim) |> collect .|> x -> isnan(x) ? 1 : x
 
     # Normalize matrix to [0, 1]
-    minval = 0#minimum(matrix)
-    maxval = 255# maximum(matrix)
+    minval = 82#minimum(matrix)
+    maxval = 244# maximum(matrix)
     norm_matrix = (matrix .- minval) ./ (maxval - minval + eps())
     norm_matrix = norm_matrix[1:length(lon_dim), length(lat_dim):-1:1]'
 
