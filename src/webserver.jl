@@ -55,17 +55,10 @@ end
 
 function request_collection_html(collectionId, collection::DGGSDataset)
     tmpl = joinpath(pkgdir(DGGSexplorer), "src", "html_templates", "collection.html") |> Template
-    tmpl(init=Dict(
-        :title => "DGGSExplorer",
-        :collectionId => collectionId,
-        :layers => keys(layers(collection)),
-        :collection => collection,
-        :collectionURL => try
-            collection.data |> first |> a -> a.data.a.storage.parent.url
-        catch
-            ""
-        end
-    ))
+    d = request_collection_json(collectionId, collection)
+    d[:collection] = collection
+    d[:title] = d[:id] * " - DGGSexplorer"
+    tmpl(init=d)
 end
 
 
@@ -76,7 +69,9 @@ function request_collection_json(collectionId, collection::DGGSDataset)
             collection.data |> first |> a -> a.data.a.storage.parent.url
         catch
             ""
-        end
+        end,
+        :layers => keys(layers(collection)),
+        :metadata => [(key=k, val=String(v)) for (k, v) in pairs(collection.metadata)],
     )
 end
 

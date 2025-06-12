@@ -1,12 +1,12 @@
 {% extends "page.html" %} {% block body %}
 <h1>
-  Collection {{ collectionId }}
+  Collection {{ id }}
   <a href="?f=json">
     <button class="btn btn-secondary rounded-pill px-3" type="button">
       JSON
     </button>
   </a>
-  <a href="{{collectionId}}/map">
+  <a href="{{id}}/map">
     <button class="btn btn-secondary rounded-pill px-3" type="button">
       map
     </button>
@@ -15,19 +15,38 @@
 
 <p>{{collection.dggsrs}} at resolution {{collection.resolution}}</p>
 
-<img src="{{collectionId}}/map" style="height: 20em" />
+<img src="{{id}}/map" style="height: 50em; max-width: 100vw" />
+
+<h2>Meta data</h2>
+
+<table class="table table-striped w-auto">
+  <thead>
+    <tr>
+      <th scope="col">Key</th>
+      <th scope="col">Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for meta in metadata %}
+    <tr>
+      <td>{{meta.key}}</td>
+      <td>{{meta.val}}</td>
+    </tr>
+    {% end %}
+  </tbody>
+</table>
 
 <h2>Storage</h2>
 
 Access array data using ZARR storage at
 
-<code>{{collectionURL}}</code>
+<code>{{url}}</code>
 
 <h2>Layers</h2>
 {% for layer in layers %}
 <h3>{{ layer }}</h3>
 <code
-  >http://127.0.0.1:8080/collections/{{collectionId}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code
+  >http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code
 >
 
 {% end %} {% endblock %} Example OGC API - Tiles server
