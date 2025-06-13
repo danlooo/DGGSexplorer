@@ -61,7 +61,6 @@ function request_collection_html(collectionId, collection::DGGSDataset)
     tmpl(init=d)
 end
 
-
 function request_collection_json(collectionId, collection::DGGSDataset)
     return Dict(
         :id => collectionId,
@@ -72,6 +71,7 @@ function request_collection_json(collectionId, collection::DGGSDataset)
         end,
         :layers => keys(layers(collection)),
         :metadata => [(key=k, val=String(v)) for (k, v) in pairs(collection.metadata)],
+        :size => join(size(collection), " x ")
     )
 end
 
@@ -104,7 +104,6 @@ end
 function request_tile(req, collectionId, collections, z, x, y)
     dggs_ds = collections[collectionId]
     layer = queryparams(req)["subset"] |> x -> match(r"Layer[(][^)]+[)]"ism, x).match[7:end-1] |> Symbol
-    @info layer
     dggs_array = getproperty(dggs_ds, layer)
 
     z = parse(Int, z)
@@ -159,6 +158,6 @@ function serve(
     @get "/collections/{collectionId}/map" (req, collectionId) -> request_collection_map(req, collectionId, collections)
     @get "/collections/{collectionId}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}" (req, collectionId, z, x, y) -> request_tile(req, collectionId, collections, z, x, y)
 
-    Makie.inline!(false)
+    #Makie.inline!(false)
     Oxygen.serve(; kwargs...)
 end

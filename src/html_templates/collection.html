@@ -1,4 +1,17 @@
-{% extends "page.html" %} {% block body %}
+{% extends "page.html" %} {% block head %}
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<!-- Make sure you put this AFTER Leaflet's CSS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+{% endblock %} {% block body %}
 <h1>
   Collection {{ id }}
   <a href="?f=json">
@@ -6,16 +19,61 @@
       JSON
     </button>
   </a>
-  <a href="{{id}}/map">
+  <a href="{{id}}/map?format=html">
     <button class="btn btn-secondary rounded-pill px-3" type="button">
       map
     </button>
   </a>
 </h1>
 
-<p>{{collection.dggsrs}} at resolution {{collection.resolution}}</p>
+<table class="w-100">
+  <tbody>
+    <tr>
+      <td class="w-50">
+        <table class="table table-striped">
+          <tbody>
+            <tr>
+              <td>DGGSRS</td>
+              <td>{{collection.dggsrs}}</td>
+            </tr>
+            <tr>
+              <td>DGGS Resolution</td>
+              <td>{{collection.resolution}}</td>
+            </tr>
+            <tr>
+              <td>Array size</td>
+              <td>{{size}}</td>
+            </tr>
+            <tr>
+              <td>Zarr storage</td>
+              <td><code>{{url}}</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+      <td class="w-50"><img src="{{id}}/map" /></td>
+    </tr>
+  </tbody>
+</table>
 
-<img src="{{id}}/map" style="height: 50em; max-width: 100vw" />
+<div id="map" style="width: 100vw; height: 60em; margin-top: 1em"></div>
+<script>
+  var map = L.map("map").setView([55, 10], 7);
+
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution:
+      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  }).addTo(map);
+  L.tileLayer(
+    "http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer(Blue)",
+    {
+      maxZoom: 6,
+      updateWhenIdle: true,
+      updateInterval: 2000,
+    }
+  ).addTo(map);
+</script>
 
 <h2>Meta data</h2>
 
@@ -35,12 +93,6 @@
     {% end %}
   </tbody>
 </table>
-
-<h2>Storage</h2>
-
-Access array data using ZARR storage at
-
-<code>{{url}}</code>
 
 <h2>Layers</h2>
 {% for layer in layers %}

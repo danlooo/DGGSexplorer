@@ -1,7 +1,6 @@
 module DGGSexplorer
 
 using DGGS
-using CairoMakie
 using Oxygen
 using OteraEngine
 using HTTP
