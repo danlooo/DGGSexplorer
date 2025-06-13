@@ -58,21 +58,29 @@
 
 <div id="map" style="width: 100vw; height: 60em; margin-top: 1em"></div>
 <script>
-  var map = L.map("map").setView([55, 10], 7);
+  var map = L.map("map");
 
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution:
       '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   }).addTo(map);
-  L.tileLayer(
-    "http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer(Blue)",
-    {
-      maxZoom: 6,
-      updateWhenIdle: true,
-      updateInterval: 2000,
-    }
-  ).addTo(map);
+  // L.tileLayer(
+  //   "http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{map_layer}})",
+  //   {
+  //     updateWhenIdle: true,
+  //     updateInterval: 2000,
+  //   }
+  // ).addTo(map);
+
+  var bbox = [
+    [{{geo_bbox.Y[1]}}, {{geo_bbox.X[1]}}],
+    [{{geo_bbox.Y[2]}}, {{geo_bbox.X[1]}}],
+    [{{geo_bbox.Y[2]}}, {{geo_bbox.X[2]}}],
+    [{{geo_bbox.Y[1]}}, {{geo_bbox.X[2]}}],
+  ]
+  var polygon = L.polygon(bbox, {color: '#d83d8a'}).addTo(map);
+  map.fitBounds(polygon.getBounds());
 </script>
 
 <h2>Meta data</h2>

@@ -10,6 +10,7 @@ using ColorSchemes
 using FileIO
 using ColorTypes
 using ImageCore
+using Makie
 using Extents
 
 include("plot.jl")
