@@ -13,7 +13,7 @@ function request_collections_json(collections)
         ],
         :extent => Dict(
             :spatial => Dict(
-                :bbox => [DGGS.get_geo_bbox(v) |> x -> [x.X[1], x.Y[1], x.X[2], x.Y[2]]]
+                :bbox => [v.bbox |> x -> [x.X[1], x.Y[1], x.X[2], x.Y[2]]]
             )
         )
     ) for (k, v) in collections]
@@ -72,7 +72,7 @@ function request_collection_json(collectionId, collection::DGGSDataset)
         :layers => keys(layers(collection)),
         :metadata => [(key=k, val=String(v)) for (k, v) in pairs(collection.metadata)],
         :size => join(size(collection), " x "),
-        :geo_bbox => DGGS.get_geo_bbox(collection),
+        :geo_bbox => collection.bbox,
         :map_layer => intersect(keys(collection), (:Red, :Green, :Blue)) |> length == 3 ? ("Red,Green,Blue") : collection |> keys |> first |> String
     )
 end
@@ -142,7 +142,7 @@ function request_collection_map(req, collectionId, collections; lon_dim=nothing,
     end
 
     if isnothing(lon_dim) || isnothing(lat_dim)
-        geo_bbox = DGGS.get_geo_bbox(dggs_ds.data[1])
+        geo_bbox = dggs_ds.data[1].bbox
         aspect_ratio = (geo_bbox.X[2] - geo_bbox.X[1]) / (geo_bbox.Y[2] - geo_bbox.Y[1])
         height = 400
         lon_dim = X(range(geo_bbox.X..., length=aspect_ratio * height |> round |> Int))
