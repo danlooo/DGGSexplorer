@@ -3,129 +3,135 @@
 <script src='https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js'></script>
 
 {% endblock %} {% block body %}
-<h1>
-  Collection {{ id }}
-  <a href="?f=json">
-    <button class="btn btn-secondary rounded-pill px-3" type="button">
-      JSON
-    </button>
-  </a>
-  <a href="{{id}}/map?format=html">
-    <button class="btn btn-secondary rounded-pill px-3" type="button">
-      map
-    </button>
-  </a>
-</h1>
 
-<table class="w-100">
-  <tbody>
-    <tr>
-      <td class="w-50">
-        <table class="table table-striped">
-          <tbody>
-            <tr>
-              <td>DGGSRS</td>
-              <td>{{collection.dggsrs}}</td>
-            </tr>
-            <tr>
-              <td>Geo BBox</td>
-              <td>{{collection.bbox}}</td>
-            </tr>
-            <tr>
-              <td>Array size</td>
-              <td>{{size}}</td>
-            </tr>
-            <tr>
-              <td>Zarr storage</td>
-              <td><code>{{url}}</code></td>
-            </tr>
-          </tbody>
-        </table>
-      </td>
-      <td class="w-50"><img src="{{id}}/map" /></td>
-    </tr>
-  </tbody>
-</table>
+<h3>Collection {{ id }}</h3>
 
-<div id="map" style="width: 100vw; height: 60em; margin-top: 1em"></div>
+<nav>
+  <div class="nav nav-tabs" id="nav-tab" role="tablist">
+    <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button"
+      role="tab" aria-controls="nav-home" aria-selected="true">Map</button>
+    <button class="nav-link" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#nav-profile" type="button"
+      role="tab" aria-controls="nav-profile" aria-selected="false">Info</button>
+
+    <button class="nav-link" type="button" role="tab" aria-selected="false">
+      <a href="?f=json">
+        JSON
+      </a>
+    </button>
+  </div>
+</nav>
+<div class="tab-content" id="nav-tabContent">
+  <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+    <div id="map" style="width: 100vw; height: 100vh; margin-top: 1em"></div>
+  </div>
+  <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
+    <table class="w-100">
+      <tbody>
+        <tr>
+          <td class="w-50">
+            <table class="table table-striped">
+              <tbody>
+                <tr>
+                  <td>DGGSRS</td>
+                  <td>{{collection.dggsrs}}</td>
+                </tr>
+                <tr>
+                  <td>Geo BBox</td>
+                  <td>{{collection.bbox}}</td>
+                </tr>
+                <tr>
+                  <td>Array size</td>
+                  <td>{{size}}</td>
+                </tr>
+                <tr>
+                  <td>Zarr storage</td>
+                  <td><code>{{url}}</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+          <td class="w-50"><img src="{{id}}/map" /></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Meta data</h2>
+
+    <table class="table table-striped w-auto">
+      <thead>
+        <tr>
+          <th scope="col">Key</th>
+          <th scope="col">Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for meta in metadata %}
+        <tr>
+          <td>{{meta.key}}</td>
+          <td>{{meta.val}}</td>
+        </tr>
+        {% end %}
+      </tbody>
+    </table>
+
+    <h2>Layers</h2>
+    {% for layer in layers %}
+    <h3>{{ layer }}</h3>
+    <code>http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code>
+
+    {% end %}
+  </div>
+</div>
+
 <script>
-
   const map = new maplibregl.Map({
     container: 'map',
-      style: {
-        version: 8,
-        sources: {
-          'osm-tiles': {
-            type: 'raster',
-            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-            tileSize: 256,
-            attribution: '© OpenStreetMap contributors'
-          },
-          'dggs-tiles': {
-            type: 'raster',
-            tiles: ["http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset={{map_layer}}"],
-            tileSize: 256,
-          } 
+    style: {
+      version: 8,
+      sources: {
+        'osm-tiles': {
+          type: 'raster',
+          tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+          tileSize: 256,
+          attribution: '© OpenStreetMap contributors'
         },
-        layers: [
-        {
-            id: 'osm-tiles',
-            type: 'raster',
-            source: 'osm-tiles',
-            minzoom: 0,
-          },
-        {
-            id: 'dggs-tiles',
-            type: 'raster',
-            source: 'dggs-tiles',
-            minzoom: 0,
-          },
-        ]
+        'dggs-tiles': {
+          type: 'raster',
+          tiles: ["http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset={{map_layer}}"],
+          tileSize: 256,
+        }
       },
-        canvasContextAttributes: {antialias: true}
+      layers: [
+        {
+          id: 'osm-tiles',
+          type: 'raster',
+          source: 'osm-tiles',
+          minzoom: 0,
+        },
+        {
+          id: 'dggs-tiles',
+          type: 'raster',
+          source: 'dggs-tiles',
+          minzoom: 0,
+        },
+      ]
+    },
+    canvasContextAttributes: { antialias: true }
+  });
+
+
+  map.on('style.load', () => {
+    map.setProjection({
+      type: 'globe', // Set projection to globe
     });
 
-
-    map.on('style.load', () => {
-        map.setProjection({
-            type: 'globe', // Set projection to globe
-        });
-
-       map.fitBounds([
-        {{geo_bbox.X[1]}}, {{geo_bbox.Y[1]}},
-        {{geo_bbox.X[2]}}, {{geo_bbox.Y[2]}}
+    map.fitBounds([
+      {{ geo_bbox.X[1] }}, {{ geo_bbox.Y[1] }},
+    {{ geo_bbox.X[2] }}, {{ geo_bbox.Y[2] }}
       ], {
-        linear: true,
-        duration: 0
-      });
+      linear: true,
+      duration: 0
+    });
     });
 </script>
-
-
-<h2>Meta data</h2>
-
-<table class="table table-striped w-auto">
-  <thead>
-    <tr>
-      <th scope="col">Key</th>
-      <th scope="col">Value</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for meta in metadata %}
-    <tr>
-      <td>{{meta.key}}</td>
-      <td>{{meta.val}}</td>
-    </tr>
-    {% end %}
-  </tbody>
-</table>
-
-<h2>Layers</h2>
-{% for layer in layers %}
-<h3>{{ layer }}</h3>
-<code
-  >http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code
->
-
-{% end %} {% endblock %}
+{% endblock %}
