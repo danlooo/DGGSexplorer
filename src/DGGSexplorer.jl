@@ -13,6 +13,8 @@ using ImageCore
 using Makie
 using Extents
 
+DGGSMakie = Base.get_extension(DGGS, :DGGSMakie)
+
 include("plot.jl")
 include("webserver.jl")
 

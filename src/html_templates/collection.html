@@ -1,16 +1,7 @@
 {% extends "page.html" %} {% block head %}
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-  crossorigin=""
-/>
-<!-- Make sure you put this AFTER Leaflet's CSS -->
-<script
-  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-  crossorigin=""
-></script>
+<link rel='stylesheet' href='https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.css' />
+<script src='https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js'></script>
+
 {% endblock %} {% block body %}
 <h1>
   Collection {{ id }}
@@ -37,10 +28,6 @@
               <td>{{collection.dggsrs}}</td>
             </tr>
             <tr>
-              <td>DGGS Resolution</td>
-              <td>{{collection.resolution}}</td>
-            </tr>
-            <tr>
               <td>Geo BBox</td>
               <td>{{collection.bbox}}</td>
             </tr>
@@ -62,67 +49,58 @@
 
 <div id="map" style="width: 100vw; height: 60em; margin-top: 1em"></div>
 <script>
-  var map = L.map("map");
 
-  // load tiles on click to prevent overload
-  // see https://plnkr.co/edit/0BxzmEEixhRTG16AvDLo?p=preview&preview
-  L.GridLayer.ClickyLoad = L.GridLayer.extend({
-   // By default, the container for a whole zoom level worth of visible tiles
-  // has a "pointer-events: none" CSS property. Override this whenever a new
-  // level container is created. This is needed for pointer (mouse) interaction.
-  _onCreateLevel: function(level) {
-    level.el.style.pointerEvents = 'inherit';
-  },
-
-  // The tiles shall be empty <div>s with some DOM events attached.
-  createTile: function(coords){
-
-  var tile = L.DomUtil.create('div');
-
-    tile.style.border = '1px solid black';
-
-    // Highlighting the tile on mouse hover is just swag.
-    L.DomEvent.on(tile, 'mouseover', function(){
-      tile.style.border = '2px solid #d83d8a';
+  const map = new maplibregl.Map({
+    container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          'osm-tiles': {
+            type: 'raster',
+            tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors'
+          },
+          'dggs-tiles': {
+            type: 'raster',
+            tiles: ["http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset={{map_layer}}"],
+            tileSize: 256,
+          } 
+        },
+        layers: [
+        {
+            id: 'osm-tiles',
+            type: 'raster',
+            source: 'osm-tiles',
+            minzoom: 0,
+          },
+        {
+            id: 'dggs-tiles',
+            type: 'raster',
+            source: 'dggs-tiles',
+            minzoom: 0,
+          },
+        ]
+      },
+        canvasContextAttributes: {antialias: true}
     });
-    L.DomEvent.on(tile, 'mouseout', function(){
-      tile.style.border = '1px solid black';
+
+
+    map.on('style.load', () => {
+        map.setProjection({
+            type: 'globe', // Set projection to globe
+        });
+
+       map.fitBounds([
+        {{geo_bbox.X[1]}}, {{geo_bbox.Y[1]}},
+        {{geo_bbox.X[2]}}, {{geo_bbox.Y[2]}}
+      ], {
+        linear: true,
+        duration: 0
+      });
     });
-
-    // When a tile is clicked, calculate the URL of the tile (using the same
-    // logic as L.TileLayer.getTileUrl() ), create a <img> element, and put
-    // the newly created image inside the empty <div> tile.
-    L.DomEvent.on(tile, 'click', function(){
-      var img = L.DomUtil.create('img');
-      img.src = L.Util.template('{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{map_layer}})', coords);
-      tile.appendChild(img);
-    });
-
-    return tile;
-  }
-  });
-
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution:
-      '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  }).addTo(map);
-
-  var bbox = [
-    [{{geo_bbox.Y[1]}}, {{geo_bbox.X[1]}}],
-    [{{geo_bbox.Y[2]}}, {{geo_bbox.X[1]}}],
-    [{{geo_bbox.Y[2]}}, {{geo_bbox.X[2]}}],
-    [{{geo_bbox.Y[1]}}, {{geo_bbox.X[2]}}],
-  ]
-  var polygon = L.polygon(bbox, {color: '#d83d8a', fillOpacity: 0, interactive: false}).addTo(map);
-  map.fitBounds(polygon.getBounds());
-
-  (new L.GridLayer.ClickyLoad()).addTo(map);
 </script>
-<p>
-  click on the map within the red bounding box to draw the corresponding DGGS
-  tile
-</p>
+
 
 <h2>Meta data</h2>
 
@@ -150,4 +128,4 @@
   >http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code
 >
 
-{% end %} {% endblock %} Example OGC API - Tiles server
+{% end %} {% endblock %}

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MapLibre 3D Globe XYZ Tiles</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- MapLibre GL JS CSS -->
+  <link href="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+    .maplibregl-ctrl-logo { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <!-- MapLibre GL JS -->
+  <script src="https://unpkg.com/maplibre-gl@3.6.1/dist/maplibre-gl.js"></script>
+  <script>
+    // Example: OpenStreetMap XYZ tiles
+    const xyzTiles = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          'osm-tiles': {
+            type: 'raster',
+            tiles: [xyzTiles],
+            tileSize: 256,
+            attribution: '© OpenStreetMap contributors'
+          }
+        },
+        layers: [
+          {
+            id: 'osm-tiles',
+            type: 'raster',
+            source: 'osm-tiles',
+            minzoom: 0,
+            maxzoom: 19
+          }
+        ]
+      },
+      center: [0, 0],
+      zoom: 1.5,
+      pitch: 45,
+      bearing: -17.6,
+      antialias: true,
+      projection: 'globe'
+    });
+
+    map.on('style.load', () => {
+      map.setFog({
+        color: 'white',
+        'high-color': '#add8e6',
+        'horizon-blend': 0.05
+      });
+    });
+  </script>
+</body>
+</html>
