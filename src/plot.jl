@@ -37,6 +37,27 @@ function to_image(dggs_ds::DGGSDataset, lon_dim, lat_dim)
     return img
 end
 
+function has_overlap(dggs::Union{DGGSArray,DGGSDataset,DGGSPyramid}, lon_dim::X, lat_dim::Y)
+    x1, x2 = dggs.bbox.X
+    y1, y2 = dggs.bbox.Y
+
+    if x1 <= minimum(lon_dim) <= x2 && y1 <= minimum(lat_dim) <= y2
+        return true
+    end
+
+    if x1 <= maximum(lon_dim) <= x2 && y1 <= minimum(lat_dim) <= y2
+        return true
+    end
+
+    if x1 <= minimum(lon_dim) <= x2 && y1 <= maximum(lat_dim) <= y2
+        return true
+    end
+    if x1 <= maximum(lon_dim) <= x2 && y1 <= maximum(lat_dim) <= y2
+        return true
+    end
+
+    return false
+end
 
 function request_tile(req, collectionId, collections, z, x, y)
     z = parse(Int, z)
@@ -70,6 +91,10 @@ function request_collection_map(req, collectionId, collections; lon_dim=nothing,
         height = 400
         lon_dim = X(range(geo_bbox.X..., length=aspect_ratio * height |> round |> Int))
         lat_dim = Y(range(geo_bbox.Y..., length=height))
+    end
+
+    if !has_overlap(dggs_ds, lon_dim, lat_dim)
+        return HTTP.Response(404, "Requested area outside of bbox")
     end
 
     if layer == "Red,Green,Blue"

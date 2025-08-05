@@ -12,6 +12,7 @@ using ColorTypes
 using ImageCore
 using Makie
 using Extents
+using GeometryBasics
 
 DGGSMakie = Base.get_extension(DGGS, :DGGSMakie)
 
