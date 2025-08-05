@@ -1,19 +1,23 @@
 {% extends "page.html" %} {% block body %}
-<h1>
-  Collections
-  <a href="?f=json">
-    <button class="btn btn-secondary rounded-pill px-3" type="button">
-      JSON
-    </button>
-  </a>
-</h1>
 
-<ul>
-  {% for collectionId in collectionIds %}
-  <li>
-    <a href="/collections/{{collectionId}}?f=html"> {{ collectionId }} </a>
-  </li>
-  {% end %}
-</ul>
+<div class="mx-3">
+  <h1>
+    Collections
+    <a href="?f=json">
+      <button class="btn btn-secondary rounded-pill px-3" type="button">
+        JSON
+      </button>
+    </a>
+  </h1>
+
+  <ul>
+    {% for collectionId in collectionIds %}
+    <li>
+      <a href="/collections/{{collectionId}}?f=html"> {{ collectionId }} </a>
+    </li>
+    {% end %}
+  </ul>
+
+</div>
 
 {% endblock %}
