@@ -20,9 +20,10 @@
     </button>
   </div>
 </nav>
-<div class="tab-content" id="nav-tabContent">
-  <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-    <div id="map" style="width: 100vw; height: 100vh; margin-top: 1em"></div>
+
+<div class="tab-content flex-fill" id="nav-tabContent">
+  <div class="tab-pane fade show active h-100" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+    <div id="map" class="h-100"></div>
   </div>
   <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab">
     <table class="w-100">
@@ -130,7 +131,8 @@
     {{ geo_bbox.X[2] }}, {{ geo_bbox.Y[2] }}
       ], {
       linear: true,
-      duration: 0
+      duration: 0,
+      padding: 200
     });
     });
 </script>
