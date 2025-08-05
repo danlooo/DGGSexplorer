@@ -77,7 +77,7 @@
     <h2>Layers</h2>
     {% for layer in layers %}
     <h3>{{ layer }}</h3>
-    <code>http://127.0.0.1:8080/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code>
+    <code>/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code>
 
     {% end %}
   </div>
