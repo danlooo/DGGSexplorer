@@ -71,6 +71,14 @@ function request_tile(req, collectionId, collections, z, x, y)
 end
 
 function request_collection_map(req, collectionId, collections; lon_dim=nothing, lat_dim=nothing)
+    if isnothing(lon_dim) || isnothing(lat_dim)
+        geo_bbox = collections[collectionId].bbox
+        aspect_ratio = (geo_bbox.X[2] - geo_bbox.X[1]) / (geo_bbox.Y[2] - geo_bbox.Y[1])
+        height = 400
+        lon_dim = X(range(geo_bbox.X..., length=aspect_ratio * height |> round |> Int))
+        lat_dim = Y(range(geo_bbox.Y..., length=height))
+    end
+
     resolution = DGGSMakie.get_resolution(collections[collectionId], lon_dim, lat_dim)
     dggs_ds = collections[collectionId][resolution]
 
@@ -85,13 +93,7 @@ function request_collection_map(req, collectionId, collections; lon_dim=nothing,
         end
     end
 
-    if isnothing(lon_dim) || isnothing(lat_dim)
-        geo_bbox = dggs_ds.data[1].bbox
-        aspect_ratio = (geo_bbox.X[2] - geo_bbox.X[1]) / (geo_bbox.Y[2] - geo_bbox.Y[1])
-        height = 400
-        lon_dim = X(range(geo_bbox.X..., length=aspect_ratio * height |> round |> Int))
-        lat_dim = Y(range(geo_bbox.Y..., length=height))
-    end
+
 
     if !has_overlap(dggs_ds, lon_dim, lat_dim)
         return HTTP.Response(404, "Requested area outside of bbox")
