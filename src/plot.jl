@@ -15,8 +15,15 @@ function to_image(dggs_array::DGGSArray, lon_dim, lat_dim)
     matrix = to_geo_array(dggs_array, lon_dim, lat_dim) |> collect |> x -> replace!(x, missing => 1, NaN => 1)
 
     # Normalize matrix to [0, 1]
-    minval = minimum(matrix)
-    maxval = maximum(matrix)
+    attrs = DD.metadata(dggs_array)
+    minval, maxval = if "actual_range" in keys(attrs)
+        attrs["actual_range"]
+    elseif "valid_range" in keys(attrs)
+        attrs["valid_range"]
+    else
+        extrema(matrix)
+    end
+
     norm_matrix = (matrix .- minval) ./ (maxval - minval + eps())
 
     norm_matrix = norm_matrix[1:length(lon_dim), length(lat_dim):-1:1]'
@@ -92,8 +99,6 @@ function request_collection_map(req, collectionId, collections; lon_dim=nothing,
             layer = keys(dggs_ds)[1] |> String
         end
     end
-
-
 
     if !has_overlap(dggs_ds, lon_dim, lat_dim)
         return HTTP.Response(404, "Requested area outside of bbox")
