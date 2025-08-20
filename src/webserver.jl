@@ -73,6 +73,31 @@ function request_collection_json(collectionId, collection::DGGSPyramid)
     )
 end
 
+function request_collection_zarr(req, collectionId, collections)
+    # TODO: extract base path
+    # TODO: throw error if not zarr
+    dggs_p = collections[collectionId]
+    dggs_a = dggs_p |> first |> x -> x.data |> values |> first
+
+    pyramid_dir = try
+        # CachedDiskArray
+        dggs_a.data.parent.a.storage.folder
+    catch
+        # CFDiskArray
+        dggs_a.data.a.storage.folder
+    end
+
+    file_path = joinpath(pyramid_dir, replace(req.target, "/collections/$(collectionId)/zarr/" => ""))
+    try
+        data = open(file_path, "r") do file
+            read(file)
+        end
+        return HTTP.Response(200, data)
+    catch
+        HTTP.Response(404, "File $(file_path) not found")
+    end
+end
+
 """
 Serve a collection of DGGSPyramids.
 
@@ -87,7 +112,7 @@ function serve(
     @get "/collections/{collectionId}" (req, collectionId) -> request_collection(req, collectionId, collections)
     @get "/collections/{collectionId}/map" (req, collectionId) -> request_collection_map(req, collectionId, collections)
     @get "/collections/{collectionId}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}" (req, collectionId, z, x, y) -> request_tile(req, collectionId, collections, z, x, y)
-
+    @get "/collections/{collectionId}/zarr/**" (req, collectionId) -> request_collection_zarr(req, collectionId, collections)
     #Makie.inline!(false)
     Oxygen.serve(; kwargs...)
 end
