@@ -38,7 +38,7 @@ function request_collections(req, collections)
     end
 end
 
-function request_collection(req, collectionId, collections)
+function request_collection(req, collectionId, collections, host_url)
     query_params = queryparams(req)
     f = get(query_params, "f", "json")
     collection = get(collections, collectionId, nothing)
@@ -46,17 +46,19 @@ function request_collection(req, collectionId, collections)
     isnothing(collection) && error("Collection not found: $collectionId")
 
     if f == "html"
-        return request_collection_html(collectionId, collection)
+        @info host_url
+        return request_collection_html(collectionId, collection, host_url)
     else
         return request_collection_json(collectionId, collection)
     end
 end
 
 
-function request_collection_html(collectionId, collection::DGGSPyramid)
+function request_collection_html(collectionId, collection::DGGSPyramid, host)
     tmpl = joinpath(pkgdir(DGGSexplorer), "src", "html_templates", "collection.html") |> Template
     d = request_collection_json(collectionId, collection)
     d[:collection] = collection
+    d[:host] = host
     d[:title] = d[:id] * " - DGGSexplorer"
     tmpl(init=d)
 end
@@ -73,6 +75,31 @@ function request_collection_json(collectionId, collection::DGGSPyramid)
     )
 end
 
+function request_collection_zarr(req, collectionId, collections)
+    # TODO: extract base path
+    # TODO: throw error if not zarr
+    dggs_p = collections[collectionId]
+    dggs_a = dggs_p |> first |> x -> x.data |> values |> first
+
+    pyramid_dir = try
+        # CachedDiskArray
+        dggs_a.data.parent.a.storage.folder
+    catch
+        # CFDiskArray
+        dggs_a.data.a.storage.folder
+    end
+
+    file_path = joinpath(pyramid_dir, replace(req.target, "/collections/$(collectionId)/zarr/" => ""))
+    try
+        data = open(file_path, "r") do file
+            read(file)
+        end
+        return HTTP.Response(200, data)
+    catch
+        HTTP.Response(404, "File $(file_path) not found")
+    end
+end
+
 """
 Serve a collection of DGGSPyramids.
 
@@ -80,14 +107,15 @@ Caching individual DGGSArrays is highly recommended.
 """
 function serve(
     collections::Dict{String,DS};
+    host::String="http://127.0.0.1:8080",
     kwargs...
 ) where {DS<:DGGSPyramid}
     @get "/" req -> request_root(collections)
     @get "/collections" req -> request_collections(req, collections)
-    @get "/collections/{collectionId}" (req, collectionId) -> request_collection(req, collectionId, collections)
+    @get "/collections/{collectionId}" (req, collectionId) -> request_collection(req, collectionId, collections, host)
     @get "/collections/{collectionId}/map" (req, collectionId) -> request_collection_map(req, collectionId, collections)
     @get "/collections/{collectionId}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}" (req, collectionId, z, x, y) -> request_tile(req, collectionId, collections, z, x, y)
-
+    @get "/collections/{collectionId}/zarr/**" (req, collectionId) -> request_collection_zarr(req, collectionId, collections)
     #Makie.inline!(false)
     Oxygen.serve(; kwargs...)
 end

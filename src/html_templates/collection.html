@@ -55,7 +55,7 @@
                 </tr>
                 <tr>
                   <td>Zarr storage</td>
-                  <td><code>{{url}}</code></td>
+                  <td><code>{{host}}/collections/{{id}}/zarr</code></td>
                 </tr>
               </tbody>
             </table>
@@ -87,7 +87,7 @@
     <h2>Layers</h2>
     {% for layer in layers %}
     <h3>{{ layer }}</h3>
-    <code>/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code>
+    <code>{{host}}/collections/{{id}}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}?subset=Layer({{layer}})</code>
 
     {% end %}
   </div>
