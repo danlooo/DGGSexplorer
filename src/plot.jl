@@ -33,12 +33,17 @@ end
 
 function to_image(dggs_ds::DGGSDataset, lon_dim, lat_dim)
     geo_ds = to_geo_dataset(dggs_ds, lon_dim, lat_dim)
-    img = Matrix{RGB{Float64}}(undef, length(lon_dim), length(lat_dim))
+    img = Matrix{RGBA{Float16}}(undef, length(lon_dim), length(lat_dim))
     for i in CartesianIndices(img)
-        r = geo_ds.Red[i] / 255 |> x -> ismissing(x) ? 1 : x |> x -> isnan(x) ? 1 : x
-        g = geo_ds.Green[i] / 255 |> x -> ismissing(x) ? 1 : x |> x -> isnan(x) ? 1 : x
-        b = geo_ds.Blue[i] / 255 |> x -> ismissing(x) ? 1 : x |> x -> isnan(x) ? 1 : x
-        img[i] = RGB(r, g, b)
+        r = geo_ds.Red[i] / 255
+        g = geo_ds.Green[i] / 255
+        b = geo_ds.Blue[i] / 255
+
+        img[i] = if ismissing(r) || ismissing(g) || ismissing(b) || isnan(r) || isnan(g) || isnan(b)
+            RGBA(0, 0, 0, 0)
+        else
+            RGBA(r, g, b, 1)
+        end
     end
     img = img[1:length(lon_dim), length(lat_dim):-1:1]'
     return img
