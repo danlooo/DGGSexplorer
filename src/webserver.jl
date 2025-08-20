@@ -46,7 +46,6 @@ function request_collection(req, collectionId, collections, host_url)
     isnothing(collection) && error("Collection not found: $collectionId")
 
     if f == "html"
-        @info host_url
         return request_collection_html(collectionId, collection, host_url)
     else
         return request_collection_json(collectionId, collection)
@@ -107,12 +106,12 @@ Caching individual DGGSArrays is highly recommended.
 """
 function serve(
     collections::Dict{String,DS};
-    host::String="http://127.0.0.1:8080",
+    host_url::String="http://127.0.0.1:8080",
     kwargs...
 ) where {DS<:DGGSPyramid}
     @get "/" req -> request_root(collections)
     @get "/collections" req -> request_collections(req, collections)
-    @get "/collections/{collectionId}" (req, collectionId) -> request_collection(req, collectionId, collections, host)
+    @get "/collections/{collectionId}" (req, collectionId) -> request_collection(req, collectionId, collections, host_url)
     @get "/collections/{collectionId}/map" (req, collectionId) -> request_collection_map(req, collectionId, collections)
     @get "/collections/{collectionId}/coverage/tiles/WebMercatorQuad/{z}/{x}/{y}" (req, collectionId, z, x, y) -> request_tile(req, collectionId, collections, z, x, y)
     @get "/collections/{collectionId}/zarr/**" (req, collectionId) -> request_collection_zarr(req, collectionId, collections)
